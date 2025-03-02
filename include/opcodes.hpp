@@ -269,7 +269,8 @@ inline void opcode_neg(std::uint32_t instr)
 // 0-5    6 7 8 9-31
 // 001011 n z p PCoffset23
 //
-// Test condition codes and branch if any are true.
+// Branch relative to the current program counter or to the given label if the
+// given condition code is true.
 inline void opcode_br(std::uint32_t instr)
 {
    std::int32_t pc_offset23 = sext((instr >> 9) & 0b11111111111111111111111, 23);

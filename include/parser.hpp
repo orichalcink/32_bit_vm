@@ -175,19 +175,13 @@ public:
    void check(Token::Type type)
    {
       if (tokens.at(index).type != type)
-      {
-         std::cerr << "Unexpected token while parsing '" << tokens.at(index).lexeme << "'.\n";
-         std::exit(-1);
-      }
+         catcher.insert("Unexpected token while parsing: '"s + tokens.at(index).lexeme + "'."s);
    }
 
    void check(Token::Type type1, Token::Type type2)
    {
       if (tokens.at(index).type != type1 && tokens.at(index).type != type2)
-      {
-         std::cerr << "Unexpected token while parsing '" << tokens.at(index).lexeme << "'.\n";
-         std::exit(-1);
-      }
+         catcher.insert("Unexpected token while parsing: '"s + tokens.at(index).lexeme + "'."s);
    }
 
    bool is(Token::Type type)

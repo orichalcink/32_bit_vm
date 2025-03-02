@@ -85,7 +85,7 @@ public:
                {
                   ch = line.at(index);
                   
-                  if ((!std::isalnum(ch) && ch != '_') || std::isspace(ch) || ch == ',')
+                  if ((!std::isalnum(ch) && ch != '_') || std::isspace(ch))
                   {
                      --index;
                      break;
@@ -100,9 +100,32 @@ public:
                else
                   tokens.push_back({Token::Type::identifier, keyword});
             }
-            else if (std::isdigit(ch))
+            else if (std::isdigit(ch) || (ch == '-' && index + 1 < line.size() && std::isdigit(line.at(index + 1))))
             {
                std::string number;
+               bool hex = false;
+               bool bin = false;
+
+               if (ch == '-')
+               {
+                  number = '-';
+                  ++index;
+                  ch = line.at(index);
+               }
+
+               // Binary
+               if (ch == '0' && index + 1 < line.size() && std::tolower(line.at(index + 1)) == 'b')
+               {
+                  bin = true;
+                  index += 2;
+               }
+
+               // Hexadecimal
+               if (ch == '0' && index + 1 < line.size() && std::tolower(line.at(index + 1)) == 'x')
+               {
+                  hex = true;
+                  index += 2;
+               }
 
                for (; index < line.size(); ++index)
                {
@@ -111,15 +134,31 @@ public:
                   if (ch == '\'')
                      continue;
 
-                  if (!std::isdigit(ch) || std::isspace(ch) || ch == ',')
+                  if (bin && ch != '0' && ch != '1' && std::isdigit(ch))
+                  {
+                     catcher.insert("Invalid binary format, expected '0' or '1', but got '"s + ch + "' instead."s);
+                     return tokens;
+                  }
+
+                  if (hex && (!std::isdigit(ch) && (!std::isalpha(ch) || std::tolower(ch) > 'f' || std::tolower(ch) < 'a')))
+                  {
+                     catcher.insert("Invalid hex format, expected '0' to 'F', but got '"s + ch + "' instead."s);
+                     return tokens;
+                  }
+
+                  if ((!hex && !std::isdigit(ch)) || (!hex && std::isalpha(ch)) || std::isspace(ch))
                   {
                      --index;
                      break;
                   }
                   number.push_back(ch);
                }
+
+               if ((bin || hex) && number.size() == 0)
+                  number += '0';
                
-               tokens.push_back({Token::Type::number, number});
+               tokens.push_back({Token::Type::number, (!hex && !bin ? number : 
+                  std::to_string(std::stoi(number, nullptr, (bin ? 2 : 16))))});
             }
             else
                catcher.insert("Unexpected character '"s + ch + "' while tokenizing."s);
