@@ -16,11 +16,11 @@ public:
    void execute()
    {
       clear_registers();
-      reg[R_PC] = pcStart;
+      reg.at(R_PC) = pcStart;
 
-      while (reg[R_PC] < maxMemory)
+      while (reg.at(R_PC) < maxMemory)
       {
-         std::uint32_t instr = memory.at(reg[R_PC]);
+         std::uint32_t instr = memory.at(reg.at(R_PC));
 
          if ((instr & 0b111111) == 0b000001)
             opcode_add(instr);
@@ -46,11 +46,22 @@ public:
             opcode_br(instr);
          else if ((instr & 0b111111) == 0b001100)
             opcode_jmp(instr);
+         else if ((instr & 0b111111) == 0b001101)
+            opcode_jsr(instr);
+         else if ((instr & 0b111111) == 0b001110)
+            opcode_ld(instr);
+         else if ((instr & 0b111111) == 0b001111)
+            opcode_ldi(instr);
+         else if ((instr & 0b111111) == 0b010000)
+            opcode_ldr(instr);
+         else if ((instr & 0b111111) == 0b010001)
+            opcode_lea(instr);
          else if ((instr & 0b111111) == 0b111111)
             break;
 
-         ++reg[R_PC];
+         ++reg.at(R_PC);
       }
+      pcStart = 0x3000;
    }
 };
 

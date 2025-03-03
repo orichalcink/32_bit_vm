@@ -5,7 +5,7 @@
 #include <cstdint>
 
 // Start of the program counter
-inline constexpr std::uint16_t pcStart = 0x3000; // ~12000 in hexadecimal
+inline std::uint16_t pcStart = 0x3000; // ~12000 in hexadecimal
 
 // Registers - 16 usable registers, program counter and condition register
 enum Register : std::uint8_t

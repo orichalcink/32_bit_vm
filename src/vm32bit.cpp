@@ -12,10 +12,10 @@
 // https://www.jmeiners.com/lc3-vm/
 
 // This virtual machine has memory and a CPU that executes some basic
-// instructions. It first reads a file, turns the contents into tokens
-// for parsing, translates the labels into memory addresses, parses
-// the tokens into instructions and places them into memory and, finally,
-// executes the instructions one by one.
+// instructions. It reads a file, turns the contents into tokens for parsing,
+// translates the labels into memory addresses and handles includes, parses the
+// tokens into instructions and places them into memory and executes the
+// instructions one by one.
 // The commands can be found in opcodes.hpp file, where their bit size and
 // functions are documented.
 
@@ -43,6 +43,9 @@ int main()
          continue;
       }
 
+      catcher.specify(file);
+      translated_files.clear();
+
       // Tokenize the file contents
       Lexer lexer (catcher, file);
       auto& tokens = lexer.tokenize();
@@ -55,6 +58,10 @@ int main()
 
       if (catcher.display()) continue;
 
+      // The file cannot be known while parsing, as the includes have been
+      // resolved by the translator.
+      catcher.specify(""s);
+
       // Parse tokens into instructions and place them in memory
       Parser parser (catcher, tokens);
       parser.parse();
@@ -65,9 +72,11 @@ int main()
       Executor executor;
       executor.execute();
 
-      std::cout << reg[R_R0] << std::endl;
-      std::cout << reg[R_R1] << std::endl;
-      std::cout << reg[R_R2] << std::endl;
+      std::cout << reg.at(R_R0) << std::endl;
+      std::cout << reg.at(R_R1) << std::endl;
+      std::cout << reg.at(R_R2) << std::endl;
+      std::cout << reg.at(R_R3) << std::endl;
+      std::cout << reg.at(R_R4) << std::endl;
    }
    return 0;
 }

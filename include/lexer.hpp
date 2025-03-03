@@ -16,7 +16,8 @@ inline const std::unordered_set<std::string> keywords
    "ADD"s, "SUB"s, "MUL"s, "DIV"s, "REM"s, "AND"s, "OR"s, "XOR"s, "NOT"s,
    "NEG"s, "BR"s, "BRn"s, "BRz"s, "BRp"s, "BRzp"s, "BRpz"s, "BRnp"s, "BRpn"s,
    "BRnz"s, "BRzn"s, "BRnzp"s, "BRnpz"s, "BRznp"s, "BRzpn"s, "BRpnz"s,
-   "BRpzn"s, "JMP"s, "RET"s, "HALT"s
+   "BRpzn"s, "JMP"s, "RET"s, "HALT"s, "JSR"s, "JSRR"s, "LD"s, "LDI"s, "LDR"s,
+   "LEA"s
 };
 
 // Registers used in the language
@@ -26,12 +27,19 @@ inline const std::unordered_set<std::string> regis_words
    "R10"s, "R11"s, "R12"s, "R13"s, "R14"s, "R15"s
 };
 
+// Directives used in the language
+inline const std::unordered_set<std::string> directives
+{
+   ".WORD"s, ".ORG"s, ".END"s, ".INCLUDE"s
+};
+
 // Tokens used in the lexer
 struct Token
 {
    enum class Type : std::uint8_t
    {
-      keyword, identifier, regis, number, label, comma, colon, eof
+      keyword, identifier, directive, regis, number, string, label, comma,
+      colon, eof
    };
 
    Type type;
@@ -77,9 +85,38 @@ public:
                tokens.push_back({Token::Type::comma, ","s});
             else if (ch == ':')
                tokens.push_back({Token::Type::colon, ":"s});
-            else if (std::isalpha(ch) || ch == '_')
+            else if (ch == '"')
+            {
+               std::string string;
+
+               if (index + 1 < line.size())
+                  ++index;
+
+               for (; index < line.size(); ++index)
+               {
+                  ch = line.at(index);
+                  if (ch == '"')
+                     break;
+
+                  string.push_back(ch);
+               }
+
+               if (index == line.size())
+               {
+                  catcher.insert("Unterminated string '"s + string + "'."s);
+                  return tokens;
+               }
+               tokens.push_back({Token::Type::string, string});
+            }
+            else if (std::isalpha(ch) || ch == '_' || ch == '.')
             {
                std::string keyword;
+
+               if (ch == '.')
+               {
+                  keyword += ch;
+                  index++;
+               }
 
                for (; index < line.size(); ++index)
                {
@@ -93,7 +130,9 @@ public:
                   keyword.push_back(ch);
                }
 
-               if (keywords.count(keyword))
+               if (directives.count(keyword))
+                  tokens.push_back({Token::Type::directive, keyword});
+               else if (keywords.count(keyword))
                   tokens.push_back({Token::Type::keyword, keyword});
                else if (regis_words.count(keyword))
                   tokens.push_back({Token::Type::regis, keyword});

@@ -275,7 +275,7 @@ inline void opcode_br(std::uint32_t instr)
 {
    std::int32_t pc_offset23 = sext((instr >> 9) & 0b11111111111111111111111, 23);
    std::uint8_t nzp         = (instr >> 6) & 0b111;
-   reg.at(R_PC) += (nzp & reg.at(R_COND) ? pc_offset23 : 0);
+   reg.at(R_PC) += ((nzp & reg.at(R_COND)) ? pc_offset23 : 0);
 }
 
 // JMP BaseR
@@ -290,7 +290,92 @@ inline void opcode_br(std::uint32_t instr)
 inline void opcode_jmp(std::uint32_t instr)
 {
    std::uint8_t base_r = (instr >> 6) & 0b1111;
-   reg.at(R_PC) = reg.at(base_r);
+   reg.at(R_PC) = (base_r == 15 ? reg.at(base_r) : reg.at(base_r) - 1);
+}
+
+// JSR LABEL
+// 0-5    6         7-31
+// 001101 jsrr_flag PCoffset25
+//
+// JSRR BaseR
+// 0-5    6         7-10
+// 001101 jsrr_flag BaseR
+//
+// Firstly save program counter in register 15 and then unconditionally jump
+// to the memory address of the label or address contained in the register.
+inline void opcode_jsr(std::uint32_t instr)
+{
+   bool jsrr_flag = (instr >> 6) & 0b1;
+   reg.at(R_R15) = reg.at(R_PC);
+
+   if (jsrr_flag)
+   {
+      std::uint8_t base_r = (instr >> 7) & 0b1111;
+      reg.at(R_PC) = reg.at(base_r) - 1;
+   }
+   else
+   {
+      std::int32_t pc_offset25 = sext((instr >> 7) & 0b1111111111111111111111111, 25);
+      reg.at(R_PC) += pc_offset25;
+   }
+}
+
+// LD DR, LABEL
+// 0-5    6-9 10-31
+// 001110 DR  PCoffset22
+//
+// Load contents of memory at the address into DR and set condition codes based
+// on the loaded value.
+inline void opcode_ld(std::uint32_t instr)
+{
+   std::uint8_t dr          = (instr >> 6) & 0b1111;
+   std::int32_t pc_offset22 = sext((instr >> 10) & 0b1111111111111111111111, 22);
+   reg.at(dr) = readMemory(reg.at(R_PC) + pc_offset22);
+   update_flags(dr);
+}
+
+// LDI DR, LABEL
+// 0-5    6-9 10-31
+// 001111 DR  PCoffset22
+//
+// Load the address inside memory, place contents into DR and set and set
+// condition codes based on loaded value.
+inline void opcode_ldi(std::uint32_t instr)
+{
+   std::uint8_t dr          = (instr >> 6) & 0b1111;
+   std::int32_t pc_offset22 = sext((instr >> 10) & 0b1111111111111111111111, 22);
+   reg.at(dr) = readMemory(readMemory(reg.at(R_PC) + pc_offset22));
+   update_flags(dr);
+}
+
+// LDR DR, BaseR, offset
+// 0-5    6-9 10-13 14-31
+// 010000 DR  BaseR PCoffset18
+//
+// Load the contents of memory at the address into DR and set condition codes
+// based on the loaded value.
+inline void opcode_ldr(std::uint32_t instr)
+{
+   std::uint8_t dr          = (instr >> 6)  & 0b1111;
+   std::uint8_t base_r      = (instr >> 10) & 0b1111;
+   std::int32_t pc_offset18 = sext((instr >> 14) & 0b11111111111111, 14);
+
+   reg.at(dr) = readMemory(reg.at(base_r) + pc_offset18);
+   update_flags(dr);
+}
+
+// LEA DR, LABEL
+// 0-5    6-9 10-31
+// 010001 DR  PCoffset22
+//
+// Load the address of the label into DR and set condition codes based on the
+// loaded value.
+inline void opcode_lea(std::uint32_t instr)
+{
+   std::uint8_t dr          = (instr >> 6) & 0b1111;
+   std::int32_t pc_offset22 = sext((instr >> 10) & 0b1111111111111111111111, 22);
+   reg.at(dr) = reg.at(R_PC) + pc_offset22;
+   update_flags(dr);
 }
 
 #endif // OPCODES_HPP
