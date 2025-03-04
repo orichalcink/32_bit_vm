@@ -53,7 +53,6 @@ public:
                }
                else
                   tokens.at(index).type = Token::Type::label;
-               advance();
             }
             else if (token.lexeme == ".INCLUDE"s)
             {

@@ -2,6 +2,19 @@
 #define EXECUTOR_HPP
 
 #include "opcodes.hpp"
+#include <unordered_map>
+#include <functional>
+
+// List of all opcodes to easily execute them 
+inline std::unordered_map<std::int16_t, std::function<void(std::uint32_t)>> opcode_list
+{
+   {1, opcode_add}, {2, opcode_sub}, {3, opcode_mul}, {4, opcode_div}, {5, opcode_rem},
+   {6, opcode_and}, {7, opcode_or}, {8, opcode_xor}, {9, opcode_not}, {10, opcode_neg},
+   {11, opcode_br}, {12, opcode_jmp}, {13, opcode_jsr}, {14, opcode_ld},
+   {15, opcode_ldi}, {16, opcode_ldr}, {17, opcode_lea}, {18, opcode_st},
+   {19, opcode_sti}, {20, opcode_str}
+};
+
 
 // Goes through the memory and executes all of the instructions until comes
 // across the HALT command.
@@ -22,42 +35,12 @@ public:
       {
          std::uint32_t instr = memory.at(reg.at(R_PC));
 
-         if ((instr & 0b111111) == 0b000001)
-            opcode_add(instr);
-         else if ((instr & 0b111111) == 0b000010)
-            opcode_sub(instr);
-         else if ((instr & 0b111111) == 0b000011)
-            opcode_mul(instr);
-         else if ((instr & 0b111111) == 0b000100)
-            opcode_div(instr);
-         else if ((instr & 0b111111) == 0b000101)
-            opcode_rem(instr);
-         else if ((instr & 0b111111) == 0b000110)
-            opcode_and(instr);
-         else if ((instr & 0b111111) == 0b000111)
-            opcode_or(instr);
-         else if ((instr & 0b111111) == 0b001000)
-            opcode_xor(instr);
-         else if ((instr & 0b111111) == 0b001001)
-            opcode_not(instr);
-         else if ((instr & 0b111111) == 0b001010)
-            opcode_neg(instr);
-         else if ((instr & 0b111111) == 0b001011)
-            opcode_br(instr);
-         else if ((instr & 0b111111) == 0b001100)
-            opcode_jmp(instr);
-         else if ((instr & 0b111111) == 0b001101)
-            opcode_jsr(instr);
-         else if ((instr & 0b111111) == 0b001110)
-            opcode_ld(instr);
-         else if ((instr & 0b111111) == 0b001111)
-            opcode_ldi(instr);
-         else if ((instr & 0b111111) == 0b010000)
-            opcode_ldr(instr);
-         else if ((instr & 0b111111) == 0b010001)
-            opcode_lea(instr);
-         else if ((instr & 0b111111) == 0b111111)
+         // Halt command
+         if (instr == 63)
             break;
+
+         if (opcode_list.count(instr & 0b111111))
+            opcode_list.at(instr & 0b111111)(instr);
 
          ++reg.at(R_PC);
       }

@@ -24,11 +24,23 @@ int main()
    while (true)
    {
       // Get file from the user
-      std::cout << "Input the name of the file (Q to quit): ";
-      std::string file;
-      std::getline(std::cin, file);
+      std::cout << "> ";
+      std::string full, command, input, output;
+      std::getline(std::cin, full);
 
-      if (file == "q"s || file == "Q"s)
+      std::istringstream iss(full);
+      iss >> command >> input >> output;
+
+      if (command == "help"s || command == "info"s)
+      {
+         std::cout << "Run a file: 'run file.asx'\n";
+         std::cout << "Compile a file: 'compile file.asx executable.exf'\n";
+         std::cout << "Run an executable: 'exec executable.exf'\n";
+         std::cout << "Quit the program: 'quit' or 'exit'\n";
+         continue;
+      }
+
+      if (command == "quit"s || command == "exit"s)
       {
          std::cout << "Quitting...\n"s;
          break;
@@ -36,47 +48,69 @@ int main()
 
       Catcher catcher;
 
-      if (!fs::is_regular_file(file))
+      // Interpretation
+      if (command == "run"s && output.empty())
       {
-         catcher.insert("File '"s + file + "' could not be opened or found."s);
+         if (!fs::is_regular_file(input))
+         {
+            catcher.insert("File '"s + input + "' could not be opened or found."s);
+            catcher.display();
+            continue;
+         }
+
+         catcher.specify(input);
+         translated_files.clear();
+
+         // Tokenize the file contents
+         Lexer lexer (catcher, input);
+         auto& tokens = lexer.tokenize();
+
+         if (catcher.display()) continue;
+
+         // Replace labels with memory addresses and handle includes
+         Translator translator (catcher, tokens);
+         translator.translate();
+
+         if (catcher.display()) continue;
+         catcher.specify(""s);
+
+         // Parse tokens into instructions and place them in memory
+         Parser parser (catcher, tokens);
+         parser.parse();
+
+         if (catcher.display()) continue;
+
+         // Execute instructions one by one
+         Executor executor;
+         executor.execute();
+
+         // Temporarily print out 5 registers before traps are added
+         std::cout << reg.at(R_R0) << std::endl;
+         std::cout << reg.at(R_R1) << std::endl;
+         std::cout << reg.at(R_R2) << std::endl;
+         std::cout << reg.at(R_R3) << std::endl;
+         std::cout << reg.at(R_R4) << std::endl;
+      }
+
+      // Compiling
+      else if (command == "compile"s && !output.empty())
+      {
+
+      }
+
+      // Running an executable
+      else if (command == "exec"s && output.empty())
+      {
+
+      }
+
+      // Invalid statement
+      else
+      {
+         catcher.insert("Unknown command: '"s + full + "'. Type 'help' for help."s);
          catcher.display();
          continue;
       }
-
-      catcher.specify(file);
-      translated_files.clear();
-
-      // Tokenize the file contents
-      Lexer lexer (catcher, file);
-      auto& tokens = lexer.tokenize();
-
-      if (catcher.display()) continue;
-
-      // Replace labels with memory addresses
-      Translator translator (catcher, tokens);
-      translator.translate();
-
-      if (catcher.display()) continue;
-
-      // The file cannot be known while parsing, as the includes have been
-      // resolved by the translator.
-      catcher.specify(""s);
-
-      // Parse tokens into instructions and place them in memory
-      Parser parser (catcher, tokens);
-      parser.parse();
-
-      if (catcher.display()) continue;
-
-      // Execute instructions one by one
-      Executor executor;
-      executor.execute();
-
-      std::cout << reg.at(R_R0) << std::endl;
-      std::cout << reg.at(R_R1) << std::endl;
-      std::cout << reg.at(R_R2) << std::endl;
-      std::cout << reg.at(R_R3) << std::endl;
-      std::cout << reg.at(R_R4) << std::endl;
    }
    return 0;
 }

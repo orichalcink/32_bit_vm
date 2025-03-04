@@ -15,13 +15,11 @@ public:
    Catcher() = default;
    ~Catcher() = default;
 
-   // Insert a new error
    void insert(const std::string& error)
    {
       errors.push_back(error);
    }
 
-   // Specify the file
    void specify(const std::string& file)
    {
       file_name = file;
@@ -32,7 +30,6 @@ public:
       return file_name;
    }
 
-   // Check if there are any errors.
    bool any_errors() const
    {
       return errors.size() > 0;
@@ -43,14 +40,15 @@ public:
    {
       if (errors.size() == 0)
          return false;
-      
-      std::cout << std::endl << errors.size() << " error" << (errors.size() == 1 ? "" : "s")
-         << " occurred" << (file_name.empty() ? ":\n"s : " in file '"s + file_name + "': \n"s);
+
+      std::cout << std::endl << errors.size();
+      std::cout << " error" << (errors.size() == 1 ? "" : "s") << " occurred";
+      std::cout << (file_name.empty() ? ":\n"s : " in file '"s + file_name + ": \n"s);
 
       for (const auto& error : errors)
          std::cout << error << std::endl;
-      
       std::cout << std::endl;
+
       errors.clear();
       return true;
    }

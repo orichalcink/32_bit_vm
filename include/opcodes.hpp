@@ -4,6 +4,7 @@
 #include "memory.hpp"
 #include "register.hpp"
 #include <cstdint>
+#include <cstdio>
 
 // ADD DR, SR1, SR2
 // 0-5    6        7-10 11-14 15-18
@@ -348,7 +349,7 @@ inline void opcode_ldi(std::uint32_t instr)
    update_flags(dr);
 }
 
-// LDR DR, BaseR, offset
+// LDR DR, BaseR, offset18
 // 0-5    6-9 10-13 14-31
 // 010000 DR  BaseR PCoffset18
 //
@@ -376,6 +377,44 @@ inline void opcode_lea(std::uint32_t instr)
    std::int32_t pc_offset22 = sext((instr >> 10) & 0b1111111111111111111111, 22);
    reg.at(dr) = reg.at(R_PC) + pc_offset22;
    update_flags(dr);
+}
+
+// ST SR, LABEL
+// 0-5    6-9 10-31
+// 010010 SR  PCoffset22
+//
+// Store the value in the register in the memory address of the label.
+inline void opcode_st(std::uint32_t instr)
+{
+   std::uint8_t sr          = (instr >> 6) & 0b1111;
+   std::int32_t pc_offset22 = sext((instr >> 10) & 0b1111111111111111111111, 22);
+   writeMemory(reg.at(R_PC) + pc_offset22, reg.at(sr));
+}
+
+// STI SR, LABEL
+// 0-5    6-9 10-31
+// 010011 SR  PCoffset22
+//
+// Store the value in the register in the memory addres specified in the label.
+inline void opcode_sti(std::uint32_t instr)
+{
+   std::uint8_t sr          = (instr >> 6) & 0b1111;
+   std::int32_t pc_offset22 = sext((instr >> 10) & 0b1111111111111111111111, 22);
+   writeMemory(readMemory(reg.at(R_PC) + pc_offset22), reg.at(sr));
+}
+
+// STR SR, BaseR, offset18
+// 0-5    6-9 10-13 14-31
+// 010100 SR  BaseR offset18
+//
+// Store the value in the SR register in the memory address found in the BaseR
+// register plus the offset.
+inline void opcode_str(std::uint32_t instr)
+{
+   std::uint8_t sr       = (instr >> 6)  & 0b1111;
+   std::uint8_t base_r   = (instr >> 10) & 0b1111;
+   std::int32_t offset18 = sext((instr >> 14) & 0b111111111111111111, 18);
+   writeMemory(reg.at(base_r) + offset18, reg.at(sr));
 }
 
 #endif // OPCODES_HPP

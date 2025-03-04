@@ -28,8 +28,9 @@ public:
          }
 
          // Most valid lines start with a keyword. Labels are an exception
-         // because the all are deleted by the translator.
-         if (quit_flag || check(Token::Type::keyword)) return;
+         // because they all get deleted by the translator.
+         if (quit_flag || check(Token::Type::keyword))
+            return;
 
          const std::string& lexeme = tokens.at(index).lexeme;
 
@@ -69,9 +70,15 @@ public:
          else if (lexeme == "LDI"s)
             parse_ld_opcode(0b001111);
          else if (lexeme == "LDR"s)
-            parse_ldr_opcode();
+            parse_ldr_opcode(0b010000);
          else if (lexeme == "LEA"s)
             parse_ld_opcode(0b010001);
+         else if (lexeme == "ST"s)
+            parse_ld_opcode(0b010010);
+         else if (lexeme == "STI"s)
+            parse_ld_opcode(0b010011);
+         else if (lexeme == "STR"s)
+            parse_ldr_opcode(0b010100);
          else if (lexeme == "HALT"s)
             parse_halt_opcode();
          else check(Token::Type::eof);
@@ -239,9 +246,9 @@ public:
       insert(instr);
    }
 
-   void parse_ldr_opcode()
+   void parse_ldr_opcode(std::uint32_t opcode)
    {
-      std::uint32_t instr = 0b010000;
+      std::uint32_t instr = opcode;
       advance();
 
       std::uint8_t dr = get_register();

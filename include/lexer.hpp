@@ -17,7 +17,7 @@ inline const std::unordered_set<std::string> keywords
    "NEG"s, "BR"s, "BRn"s, "BRz"s, "BRp"s, "BRzp"s, "BRpz"s, "BRnp"s, "BRpn"s,
    "BRnz"s, "BRzn"s, "BRnzp"s, "BRnpz"s, "BRznp"s, "BRzpn"s, "BRpnz"s,
    "BRpzn"s, "JMP"s, "RET"s, "HALT"s, "JSR"s, "JSRR"s, "LD"s, "LDI"s, "LDR"s,
-   "LEA"s
+   "LEA"s, "ST"s, "STI"s, "STR"s
 };
 
 // Registers used in the language
